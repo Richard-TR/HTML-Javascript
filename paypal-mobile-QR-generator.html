@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PayPal QR Code Generator</title>
+    <style>
+        body { font-family: Arial, sans-serif; text-align: center; padding: 20px; }
+        .container { width: 200px; margin: auto; }
+        input { width: 100%; padding: 10px; margin: 10px 0; font-size: 1.2em; text-align: right; }
+        button { width: 100%; padding: 10px; font-size: 1.2em; background-color: #0070ba; color: white; border: none; cursor: pointer; }
+        #qr-code { margin-top: 20px; }
+        #error-message { color: red; margin-top: 10px; font-size: 1em; }
+
+        /* Number pad styling */
+        .number-pad { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin: 10px 0; }
+        .number-pad button { padding: 15px; font-size: 1.2em; background-color: #ddd; border: 1px solid #ccc; cursor: pointer; }
+        .number-pad .clear { background-color: #ff5555; color: white; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>Generate PayPal QR Code</h2>
+        <input type="text" id="amount" placeholder="Enter amount in £" required>
+
+        <!-- Number Pad -->
+        <div class="number-pad">
+            <button onclick="appendNumber('1')">1</button>
+            <button onclick="appendNumber('2')">2</button>
+            <button onclick="appendNumber('3')">3</button>
+            <button onclick="appendNumber('4')">4</button>
+            <button onclick="appendNumber('5')">5</button>
+            <button onclick="appendNumber('6')">6</button>
+            <button onclick="appendNumber('7')">7</button>
+            <button onclick="appendNumber('8')">8</button>
+            <button onclick="appendNumber('9')">9</button>
+            <button onclick="appendNumber('.')">.</button>
+            <button onclick="appendNumber('0')">0</button>
+            <button class="clear" onclick="clearAmount()">Clear</button>
+        </div>
+
+        <button onclick="generateQRCode()">Generate QR Code</button>
+        <canvas id="qr-code"></canvas>
+        <div id="error-message"></div>
+    </div>
+
+    <!-- Include the QRious library -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrious/4.0.2/qrious.min.js"></script>
+    <script>
+        function displayError(message) {
+            const errorDiv = document.getElementById('error-message');
+            errorDiv.innerText = message;
+        }
+
+        function clearError() {
+            const errorDiv = document.getElementById('error-message');
+            errorDiv.innerText = '';
+        }
+
+        function appendNumber(num) {
+            const amountInput = document.getElementById('amount');
+
+            if (num === '.') {
+                // Only add decimal point if it doesn't already exist in the value
+                if (!amountInput.value.includes('.')) {
+                    amountInput.value = amountInput.value === '' ? '0.' : amountInput.value + '.';
+                }
+            } else {
+                // Append numbers as usual
+                amountInput.value += num;
+            }
+        }
+
+        function clearAmount() {
+            document.getElementById('amount').value = ''; // Clear the amount input field
+        }
+
+        function generateQRCode() {
+            clearError(); // Clear previous errors
+            
+            try {
+                const amount = parseFloat(document.getElementById('amount').value);
+
+                // Validate the amount input
+                if (isNaN(amount) || amount <= 0) {
+                    displayError("Please enter a valid amount greater than £0.");
+                    return;
+                }
+
+                // Replace 'username' with your actual PayPal.me username
+                const username = "username";
+                const paypalLink = `https://www.paypal.me/${username}/${amount.toFixed(2)}`;
+
+                // Attempt to generate the QR code
+                try {
+                    const qr = new QRious({
+                        element: document.getElementById('qr-code'),
+                        value: paypalLink,
+                        size: 200 // Size of the QR code
+                    });
+                } catch (qrError) {
+                    displayError("Failed to generate QR code. Please try again.");
+                    console.error("QR Code Generation Error:", qrError);
+                    return;
+                }
+            } catch (error) {
+                // Log any unexpected errors and inform the user
+                displayError("An unexpected error occurred. Please refresh the page and try again.");
+                console.error("Unexpected Error:", error);
+            }
+        }
+    </script>
+</body>
+</html>
